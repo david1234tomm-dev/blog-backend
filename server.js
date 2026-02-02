@@ -2,24 +2,41 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-require("dotenv").config();  // Load .env variables
+require("dotenv").config();
 
 const app = express();
-app.use(cors());
+
+/* =======================
+   CORS CONFIG (IMPORTANT)
+   ======================= */
+app.use(
+  cors({
+    origin: [
+      "https://blog-frontend-1vqa.onrender.com", // Render frontend
+      "http://localhost:3000" // local dev
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+  })
+);
+
 app.use(express.json());
 
-// MongoDB Atlas connection
-// Make sure your .env file has: MONGO_URI="your_mongodb_atlas_connection_string"
+/* =======================
+   MongoDB Connection
+   ======================= */
 const mongoURI = process.env.MONGO_URI;
 
-mongoose.connect(mongoURI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-  .then(() => console.log('✅ MongoDB connected'))
-  .catch(err => console.error('❌ MongoDB connection error:', err));
+mongoose
+  .connect(mongoURI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-// Blog schema
+/* =======================
+   Blog Schema & Model
+   ======================= */
 const blogSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
@@ -30,7 +47,14 @@ const blogSchema = new mongoose.Schema(
 
 const Blog = mongoose.model("Blog", blogSchema);
 
-// Routes
+/* =======================
+   Routes
+   ======================= */
+
+// Health check
+app.get("/", (req, res) => {
+  res.send("Blog backend is running 🚀");
+});
 
 // GET all blogs
 app.get("/api/blogs", async (req, res) => {
@@ -42,49 +66,66 @@ app.get("/api/blogs", async (req, res) => {
   }
 });
 
-// POST a new blog
+// POST new blog
 app.post("/api/blogs", async (req, res) => {
   try {
     const { title, description } = req.body;
+
     if (!title || !description) {
-      return res.status(400).json({ message: "Title and description required" });
+      return res
+        .status(400)
+        .json({ message: "Title and description required" });
     }
 
     const blog = new Blog({ title, description });
     await blog.save();
+
     res.status(201).json(blog);
   } catch (error) {
     res.status(500).json({ message: "Failed to create blog" });
   }
 });
 
-// DELETE a blog
-app.delete("/api/blogs/:id", async (req, res) => {
-  try {
-    const deleted = await Blog.findByIdAndDelete(req.params.id);
-    if (!deleted) return res.status(404).json({ message: "Blog not found" });
-    res.json({ message: "Blog deleted" });
-  } catch (error) {
-    res.status(500).json({ message: "Failed to delete blog" });
-  }
-});
-
-// UPDATE a blog
+// UPDATE blog
 app.put("/api/blogs/:id", async (req, res) => {
   try {
-    const updated = await Blog.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!updated) return res.status(404).json({ message: "Blog not found" });
+    const updated = await Blog.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ message: "Blog not found" });
+    }
+
     res.json(updated);
   } catch (error) {
     res.status(500).json({ message: "Failed to update blog" });
   }
 });
 
-// Health check route (optional)
-app.get("/", (req, res) => {
-  res.send("Blog backend is running 🚀");
+// DELETE blog
+app.delete("/api/blogs/:id", async (req, res) => {
+  try {
+    const deleted = await Blog.findByIdAndDelete(req.params.id);
+
+    if (!deleted) {
+      return res.status(404).json({ message: "Blog not found" });
+    }
+
+    res.json({ message: "Blog deleted" });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to delete blog" });
+  }
 });
 
-// Start server
+/* =======================
+   Start Server
+   ======================= */
 const PORT = process.env.PORT || 5050;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+app.listen(PORT, () =>
+  console.log(`🚀 Server running on port ${PORT}`)
+);
+ //hello
