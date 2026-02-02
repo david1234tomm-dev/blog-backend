@@ -6,37 +6,21 @@ require("dotenv").config();
 
 const app = express();
 
-/* =======================
-   CORS CONFIG (IMPORTANT)
-   ======================= */
-app.use(
-  cors({
-    origin: [
-      "https://blog-frontend-1vqa.onrender.com", // Render frontend
-      "http://localhost:3000" // local dev
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE"],
-  })
-);
-
+/* ========= CORS ========= */
+app.use(cors());
 app.use(express.json());
 
-/* =======================
-   MongoDB Connection
-   ======================= */
+/* ========= MongoDB ========= */
 const mongoURI = process.env.MONGO_URI;
 
 mongoose
-  .connect(mongoURI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+  .connect(mongoURI)
   .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.error("❌ MongoDB connection error:", err));
+  .catch((err) =>
+    console.error("❌ MongoDB connection error:", err)
+  );
 
-/* =======================
-   Blog Schema & Model
-   ======================= */
+/* ========= Schema ========= */
 const blogSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
@@ -47,46 +31,44 @@ const blogSchema = new mongoose.Schema(
 
 const Blog = mongoose.model("Blog", blogSchema);
 
-/* =======================
-   Routes
-   ======================= */
+/* ========= Routes ========= */
 
 // Health check
 app.get("/", (req, res) => {
   res.send("Blog backend is running 🚀");
 });
 
-// GET all blogs
+// Get all blogs
 app.get("/api/blogs", async (req, res) => {
   try {
     const blogs = await Blog.find().sort({ createdAt: -1 });
     res.json(blogs);
-  } catch (error) {
+  } catch {
     res.status(500).json({ message: "Failed to fetch blogs" });
   }
 });
 
-// POST new blog
+// Create blog
 app.post("/api/blogs", async (req, res) => {
   try {
     const { title, description } = req.body;
 
     if (!title || !description) {
-      return res
-        .status(400)
-        .json({ message: "Title and description required" });
+      return res.status(400).json({
+        message: "Title and description required",
+      });
     }
 
     const blog = new Blog({ title, description });
     await blog.save();
 
     res.status(201).json(blog);
-  } catch (error) {
+  } catch {
     res.status(500).json({ message: "Failed to create blog" });
   }
 });
 
-// UPDATE blog
+// Update blog
 app.put("/api/blogs/:id", async (req, res) => {
   try {
     const updated = await Blog.findByIdAndUpdate(
@@ -100,12 +82,12 @@ app.put("/api/blogs/:id", async (req, res) => {
     }
 
     res.json(updated);
-  } catch (error) {
+  } catch {
     res.status(500).json({ message: "Failed to update blog" });
   }
 });
 
-// DELETE blog
+// Delete blog
 app.delete("/api/blogs/:id", async (req, res) => {
   try {
     const deleted = await Blog.findByIdAndDelete(req.params.id);
@@ -115,17 +97,13 @@ app.delete("/api/blogs/:id", async (req, res) => {
     }
 
     res.json({ message: "Blog deleted" });
-  } catch (error) {
+  } catch {
     res.status(500).json({ message: "Failed to delete blog" });
   }
 });
 
-/* =======================
-   Start Server
-   ======================= */
+/* ========= Start Server ========= */
 const PORT = process.env.PORT || 5050;
-
 app.listen(PORT, () =>
   console.log(`🚀 Server running on port ${PORT}`)
 );
- //hello
