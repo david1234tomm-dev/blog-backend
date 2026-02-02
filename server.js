@@ -7,6 +7,7 @@ require("dotenv").config();
 const app = express();
 
 /* ========= CORS ========= */
+// Allow all origins (you can restrict to frontend URL later)
 app.use(cors());
 app.use(express.json());
 
@@ -16,9 +17,10 @@ const mongoURI = process.env.MONGO_URI;
 mongoose
   .connect(mongoURI)
   .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) =>
-    console.error("❌ MongoDB connection error:", err)
-  );
+  .catch((err) => {
+    console.error("❌ MongoDB connection error:", err);
+    process.exit(1); // stop server if MongoDB fails
+  });
 
 /* ========= Schema ========= */
 const blogSchema = new mongoose.Schema(
@@ -43,7 +45,8 @@ app.get("/api/blogs", async (req, res) => {
   try {
     const blogs = await Blog.find().sort({ createdAt: -1 });
     res.json(blogs);
-  } catch {
+  } catch (error) {
+    console.error("Error fetching blogs:", error);
     res.status(500).json({ message: "Failed to fetch blogs" });
   }
 });
@@ -63,7 +66,8 @@ app.post("/api/blogs", async (req, res) => {
     await blog.save();
 
     res.status(201).json(blog);
-  } catch {
+  } catch (error) {
+    console.error("Error creating blog:", error);
     res.status(500).json({ message: "Failed to create blog" });
   }
 });
@@ -71,18 +75,17 @@ app.post("/api/blogs", async (req, res) => {
 // Update blog
 app.put("/api/blogs/:id", async (req, res) => {
   try {
-    const updated = await Blog.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
+    const updated = await Blog.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
 
     if (!updated) {
       return res.status(404).json({ message: "Blog not found" });
     }
 
     res.json(updated);
-  } catch {
+  } catch (error) {
+    console.error("Error updating blog:", error);
     res.status(500).json({ message: "Failed to update blog" });
   }
 });
@@ -97,7 +100,8 @@ app.delete("/api/blogs/:id", async (req, res) => {
     }
 
     res.json({ message: "Blog deleted" });
-  } catch {
+  } catch (error) {
+    console.error("Error deleting blog:", error);
     res.status(500).json({ message: "Failed to delete blog" });
   }
 });
