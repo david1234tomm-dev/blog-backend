@@ -11,11 +11,11 @@ const corsOptions = {
   origin: "https://blog-frontend-1vqa.onrender.com",
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type"],
+  credentials: true,
 };
 
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions)); // handle preflight requests
-
 app.use(express.json());
 
 /* ========= MongoDB ========= */
@@ -29,16 +29,8 @@ mongoose
 /* ========= Schema ========= */
 const blogSchema = new mongoose.Schema(
   {
-    title: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    description: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+    title: { type: String, required: true, trim: true },
+    description: { type: String, required: true, trim: true },
   },
   { timestamps: true }
 );
@@ -69,9 +61,7 @@ app.post("/api/blogs", async (req, res) => {
     const { title, description } = req.body;
 
     if (!title || !description) {
-      return res
-        .status(400)
-        .json({ message: "Title and description are required" });
+      return res.status(400).json({ message: "Title and description are required" });
     }
 
     const blog = new Blog({ title, description });
@@ -87,11 +77,7 @@ app.post("/api/blogs", async (req, res) => {
 // Update blog
 app.put("/api/blogs/:id", async (req, res) => {
   try {
-    const updatedBlog = await Blog.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
+    const updatedBlog = await Blog.findByIdAndUpdate(req.params.id, req.body, { new: true });
 
     if (!updatedBlog) {
       return res.status(404).json({ message: "Blog not found" });
@@ -118,6 +104,12 @@ app.delete("/api/blogs/:id", async (req, res) => {
     console.error(err);
     res.status(500).json({ message: "Failed to delete blog" });
   }
+});
+
+/* ========= Optional Catch-All Route for Frontend ========= */
+// This prevents `PathError` if you try `app.get('*')` in older versions
+app.get('/*', (req, res) => {
+  res.send("Backend is running 🚀"); // or serve index.html if serving React
 });
 
 /* ========= Start Server ========= */
