@@ -1,3 +1,4 @@
+// server.js
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -14,8 +15,9 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options("/:all(.*)", cors(corsOptions)); // handle preflight requests
+app.options("*", cors(corsOptions)); // handle preflight requests
 
+/* ========= Body parser ========= */
 app.use(express.json());
 
 /* ========= MongoDB ========= */
@@ -38,10 +40,13 @@ const blogSchema = new mongoose.Schema(
 const Blog = mongoose.model("Blog", blogSchema);
 
 /* ========= Routes ========= */
+
+// Health check
 app.get("/", (req, res) => {
   res.send("Blog backend is running 🚀");
 });
 
+// Get all blogs
 app.get("/api/blogs", async (req, res) => {
   try {
     const blogs = await Blog.find().sort({ createdAt: -1 });
@@ -52,13 +57,17 @@ app.get("/api/blogs", async (req, res) => {
   }
 });
 
+// Create blog
 app.post("/api/blogs", async (req, res) => {
   try {
     const { title, description } = req.body;
-    if (!title || !description) return res.status(400).json({ message: "Title and description are required" });
+    if (!title || !description) {
+      return res.status(400).json({ message: "Title and description are required" });
+    }
 
     const blog = new Blog({ title, description });
     await blog.save();
+
     res.status(201).json(blog);
   } catch (err) {
     console.error(err);
@@ -66,10 +75,13 @@ app.post("/api/blogs", async (req, res) => {
   }
 });
 
+// Update blog
 app.put("/api/blogs/:id", async (req, res) => {
   try {
     const updatedBlog = await Blog.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!updatedBlog) return res.status(404).json({ message: "Blog not found" });
+    if (!updatedBlog) {
+      return res.status(404).json({ message: "Blog not found" });
+    }
     res.status(200).json(updatedBlog);
   } catch (err) {
     console.error(err);
@@ -77,10 +89,13 @@ app.put("/api/blogs/:id", async (req, res) => {
   }
 });
 
+// Delete blog
 app.delete("/api/blogs/:id", async (req, res) => {
   try {
     const deletedBlog = await Blog.findByIdAndDelete(req.params.id);
-    if (!deletedBlog) return res.status(404).json({ message: "Blog not found" });
+    if (!deletedBlog) {
+      return res.status(404).json({ message: "Blog not found" });
+    }
     res.status(200).json({ message: "Blog deleted successfully" });
   } catch (err) {
     console.error(err);
@@ -88,13 +103,9 @@ app.delete("/api/blogs/:id", async (req, res) => {
   }
 });
 
-/* ========= Catch-All Route for Frontend ========= */
-app.get("/:all(.*)", (req, res) => {
-  res.send("Backend is running 🚀");
-});
-
 /* ========= Start Server ========= */
 const PORT = process.env.PORT || 5050;
+
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
