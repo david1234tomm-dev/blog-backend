@@ -1,15 +1,17 @@
 {
   "name": "blog-backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Blog backend",
+  "main": "server.js",
+  "type": "commonjs",
   "scripts": {
+    "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
+  "engines": {
+    "node": "22.x",
+    "npm": "10.x"
+  },
   "dependencies": {
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
@@ -18,9 +20,4 @@
     "mongoose": "^9.1.5"
   }
 }
-{
-  "scripts": {
-    "start": "node server.js"
-  }
-}
-
+  
