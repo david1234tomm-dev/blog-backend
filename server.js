@@ -108,25 +108,21 @@ require("dotenv").config();
 const app = express();
 
 /* ========= CORS ========= */
-// Allow requests only from your frontend URL
 const corsOptions = {
-  origin: "https://blog-frontend-1vqa.onrender.com", // <-- your frontend
+  origin: "https://blog-frontend-1vqa.onrender.com",
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type"],
   credentials: true,
 };
 
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions)); // enable preflight for all routes
+app.options("/api/*", cors(corsOptions)); // <-- only API routes
 
-/* ========= Body Parser ========= */
 app.use(express.json());
 
 /* ========= MongoDB ========= */
-const mongoURI = process.env.MONGO_URI;
-
 mongoose
-  .connect(mongoURI)
+  .connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.error("❌ MongoDB connection error:", err));
 
@@ -142,10 +138,7 @@ const blogSchema = new mongoose.Schema(
 const Blog = mongoose.model("Blog", blogSchema);
 
 /* ========= Routes ========= */
-// Health check
-app.get("/", (req, res) => {
-  res.send("Blog backend is running 🚀");
-});
+app.get("/", (req, res) => res.send("Blog backend is running 🚀"));
 
 // Get all blogs
 app.get("/api/blogs", async (req, res) => {
