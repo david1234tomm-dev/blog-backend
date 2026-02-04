@@ -7,17 +7,13 @@ require("dotenv").config();
 const app = express();
 
 /* ========= CORS ========= */
+// Allow requests only from your frontend Render URL
 const corsOptions = {
-  origin: "https://blog-frontend-1vqa.onrender.com",
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type"],
-  credentials: true,
+  origin: "https://blog-frontend-1vqa.onrender.com", // Replace with your frontend URL
+  methods: ["GET", "POST", "PUT", "DELETE"],
 };
-
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions)); // handle preflight requests
 
-/* ========= Body parser ========= */
 app.use(express.json());
 
 /* ========= MongoDB ========= */
@@ -31,8 +27,8 @@ mongoose
 /* ========= Schema ========= */
 const blogSchema = new mongoose.Schema(
   {
-    title: { type: String, required: true, trim: true },
-    description: { type: String, required: true, trim: true },
+    title: { type: String, required: true },
+    description: { type: String, required: true },
   },
   { timestamps: true }
 );
@@ -40,7 +36,6 @@ const blogSchema = new mongoose.Schema(
 const Blog = mongoose.model("Blog", blogSchema);
 
 /* ========= Routes ========= */
-
 // Health check
 app.get("/", (req, res) => {
   res.send("Blog backend is running 🚀");
@@ -50,7 +45,7 @@ app.get("/", (req, res) => {
 app.get("/api/blogs", async (req, res) => {
   try {
     const blogs = await Blog.find().sort({ createdAt: -1 });
-    res.status(200).json(blogs);
+    res.json(blogs);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to fetch blogs" });
@@ -61,13 +56,11 @@ app.get("/api/blogs", async (req, res) => {
 app.post("/api/blogs", async (req, res) => {
   try {
     const { title, description } = req.body;
-    if (!title || !description) {
-      return res.status(400).json({ message: "Title and description are required" });
-    }
+    if (!title || !description)
+      return res.status(400).json({ message: "Title and description required" });
 
     const blog = new Blog({ title, description });
     await blog.save();
-
     res.status(201).json(blog);
   } catch (err) {
     console.error(err);
@@ -78,11 +71,9 @@ app.post("/api/blogs", async (req, res) => {
 // Update blog
 app.put("/api/blogs/:id", async (req, res) => {
   try {
-    const updatedBlog = await Blog.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!updatedBlog) {
-      return res.status(404).json({ message: "Blog not found" });
-    }
-    res.status(200).json(updatedBlog);
+    const updated = await Blog.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!updated) return res.status(404).json({ message: "Blog not found" });
+    res.json(updated);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to update blog" });
@@ -92,11 +83,9 @@ app.put("/api/blogs/:id", async (req, res) => {
 // Delete blog
 app.delete("/api/blogs/:id", async (req, res) => {
   try {
-    const deletedBlog = await Blog.findByIdAndDelete(req.params.id);
-    if (!deletedBlog) {
-      return res.status(404).json({ message: "Blog not found" });
-    }
-    res.status(200).json({ message: "Blog deleted successfully" });
+    const deleted = await Blog.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ message: "Blog not found" });
+    res.json({ message: "Blog deleted" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to delete blog" });
@@ -105,7 +94,4 @@ app.delete("/api/blogs/:id", async (req, res) => {
 
 /* ========= Start Server ========= */
 const PORT = process.env.PORT || 5050;
-
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
