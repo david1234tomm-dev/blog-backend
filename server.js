@@ -99,6 +99,7 @@
 
 
 // server.js
+// server.js
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -107,9 +108,18 @@ require("dotenv").config();
 const app = express();
 
 /* ========= CORS ========= */
-// Temporarily allow ALL origins for testing
-app.use(cors()); // <-- open CORS for all origins
+// Allow requests only from your frontend URL
+const corsOptions = {
+  origin: "https://blog-frontend-1vqa.onrender.com", // <-- your frontend
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type"],
+  credentials: true,
+};
 
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // enable preflight for all routes
+
+/* ========= Body Parser ========= */
 app.use(express.json());
 
 /* ========= MongoDB ========= */
