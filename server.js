@@ -209,7 +209,7 @@
 
 
 
-
+// server.js
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -217,40 +217,32 @@ require("dotenv").config();
 
 const app = express();
 
-/* ========= CORS ========= */
-const corsOptions = {
-  origin: "https://blog-frontend-1vqa.onrender.com", // frontend URL
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // include OPTIONS
-  allowedHeaders: ["Content-Type"],
-  credentials: true, // optional
-};
-app.use(cors(corsOptions)); // handles preflight automatically
+// Enable CORS for your frontend
+app.use(cors({
+  origin: "https://blog-frontend-1vqa.onrender.com",
+  methods: ["GET","POST","PUT","DELETE"],
+  allowedHeaders: ["Content-Type"]
+}));
 
 app.use(express.json());
 
-/* ========= MongoDB ========= */
-const mongoURI = process.env.MONGO_URI;
-
-mongoose
-  .connect(mongoURI)
+// MongoDB connection
+mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.error("❌ MongoDB connection error:", err));
+  .catch(err => console.error("❌ MongoDB connection error:", err));
 
-/* ========= Schema ========= */
-const blogSchema = new mongoose.Schema(
-  {
-    title: { type: String, required: true },
-    description: { type: String, required: true },
-  },
-  { timestamps: true }
-);
+// Blog schema
+const blogSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  description: { type: String, required: true }
+}, { timestamps: true });
 
 const Blog = mongoose.model("Blog", blogSchema);
 
-/* ========= Routes ========= */
-app.get("/", (req, res) => res.send("Blog backend is running 🚀"));
+// Routes
+app.get("/", (req, res) => res.send("Blog backend running 🚀"));
 
-// Get all blogs
+// GET all blogs
 app.get("/api/blogs", async (req, res) => {
   try {
     const blogs = await Blog.find().sort({ createdAt: -1 });
@@ -261,13 +253,11 @@ app.get("/api/blogs", async (req, res) => {
   }
 });
 
-// Create blog
+// POST a blog
 app.post("/api/blogs", async (req, res) => {
   try {
     const { title, description } = req.body;
-    if (!title || !description)
-      return res.status(400).json({ message: "Title and description required" });
-
+    if (!title || !description) return res.status(400).json({ message: "Title and description required" });
     const blog = new Blog({ title, description });
     await blog.save();
     res.status(201).json(blog);
@@ -277,19 +267,7 @@ app.post("/api/blogs", async (req, res) => {
   }
 });
 
-// Update blog
-app.put("/api/blogs/:id", async (req, res) => {
-  try {
-    const updated = await Blog.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!updated) return res.status(404).json({ message: "Blog not found" });
-    res.json(updated);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Failed to update blog" });
-  }
-});
-
-// Delete blog
+// DELETE a blog
 app.delete("/api/blogs/:id", async (req, res) => {
   try {
     const deleted = await Blog.findByIdAndDelete(req.params.id);
@@ -301,6 +279,18 @@ app.delete("/api/blogs/:id", async (req, res) => {
   }
 });
 
-/* ========= Start Server ========= */
+// UPDATE a blog
+app.put("/api/blogs/:id", async (req, res) => {
+  try {
+    const updated = await Blog.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!updated) return res.status(404).json({ message: "Blog not found" });
+    res.json(updated);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to update blog" });
+  }
+});
+
+// Use Render port
 const PORT = process.env.PORT || 5050;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
