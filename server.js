@@ -101,6 +101,7 @@
 // server.js
 // server.jsconst express = require("express");
 
+// server.js
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -108,29 +109,27 @@ require("dotenv").config();
 
 const app = express();
 
-// ===== CORS =====
-// Only allow your frontend Render URL
-app.use(
-  cors({
-    origin: "https://blog-frontend-1vqa.onrender.com",
-    credentials: true,
-  })
-);
+/* ========= CORS ========= */
+// Allow only your frontend URL
+const corsOptions = {
+  origin: "https://blog-frontend-1vqa.onrender.com",
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type"],
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
+app.options("/api/*", cors(corsOptions)); // preflight only for API routes
 
 app.use(express.json());
 
-// ===== MongoDB =====
-const mongoURI = process.env.MONGO_URI;
-
+/* ========= MongoDB ========= */
 mongoose
-  .connect(mongoURI)
+  .connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => {
-    console.error("❌ MongoDB connection error:", err);
-    process.exit(1); // stop server if DB fails
-  });
+  .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-// ===== Schema =====
+/* ========= Schema ========= */
 const blogSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
@@ -141,8 +140,7 @@ const blogSchema = new mongoose.Schema(
 
 const Blog = mongoose.model("Blog", blogSchema);
 
-// ===== Routes =====
-
+/* ========= Routes ========= */
 // Health check
 app.get("/", (req, res) => res.send("Blog backend is running 🚀"));
 
@@ -197,4 +195,7 @@ app.delete("/api/blogs/:id", async (req, res) => {
   }
 });
 
-// ===== Opti
+/* ========= Start Server ========= */
+// IMPORTANT: Use Render-provided port
+const PORT = process.env.PORT || 5050;
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
