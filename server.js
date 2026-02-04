@@ -14,8 +14,13 @@ const corsOptions = {
   credentials: true,
 };
 
+// Apply CORS middleware
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions)); // handle preflight requests
+
+// Correct preflight wildcard
+app.options("/*", cors(corsOptions)); // handle preflight requests
+
+// Body parser
 app.use(express.json());
 
 /* ========= MongoDB ========= */
@@ -107,9 +112,9 @@ app.delete("/api/blogs/:id", async (req, res) => {
 });
 
 /* ========= Optional Catch-All Route for Frontend ========= */
-// This prevents `PathError` if you try `app.get('*')` in older versions
-app.get('/*', (req, res) => {
-  res.send("Backend is running 🚀"); // or serve index.html if serving React
+// Prevent PathError and support client-side routing if needed
+app.get("/*", (req, res) => {
+  res.send("Backend is running 🚀"); // or serve React index.html
 });
 
 /* ========= Start Server ========= */
