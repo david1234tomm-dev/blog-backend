@@ -209,7 +209,7 @@
 
 
 
-// server.js
+// server.js// server.js
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -217,32 +217,42 @@ require("dotenv").config();
 
 const app = express();
 
-// Enable CORS for your frontend
-app.use(cors({
-  origin: "https://blog-frontend-1vqa.onrender.com",
-  methods: ["GET","POST","PUT","DELETE"],
-  allowedHeaders: ["Content-Type"]
-}));
+/* ========= CORS ========= */
+app.use(
+  cors({
+    origin: "https://blog-frontend-1vqa.onrender.com",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type"],
+  })
+);
 
 app.use(express.json());
 
-// MongoDB connection
-mongoose.connect(process.env.MONGO_URI)
+/* ========= MongoDB ========= */
+mongoose
+  .connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB connected"))
-  .catch(err => console.error("❌ MongoDB connection error:", err));
+  .catch((err) => console.error("❌ MongoDB error:", err));
 
-// Blog schema
-const blogSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  description: { type: String, required: true }
-}, { timestamps: true });
+/* ========= Schema ========= */
+const blogSchema = new mongoose.Schema(
+  {
+    title: { type: String, required: true },
+    description: { type: String, required: true },
+  },
+  { timestamps: true }
+);
 
 const Blog = mongoose.model("Blog", blogSchema);
 
-// Routes
-app.get("/", (req, res) => res.send("Blog backend running 🚀"));
+/* ========= Routes ========= */
 
-// GET all blogs
+// Health check (NO wildcard)
+app.get("/", (req, res) => {
+  res.send("Blog backend is running 🚀");
+});
+
+// Get blogs
 app.get("/api/blogs", async (req, res) => {
   try {
     const blogs = await Blog.find().sort({ createdAt: -1 });
@@ -253,11 +263,13 @@ app.get("/api/blogs", async (req, res) => {
   }
 });
 
-// POST a blog
+// Create blog
 app.post("/api/blogs", async (req, res) => {
   try {
     const { title, description } = req.body;
-    if (!title || !description) return res.status(400).json({ message: "Title and description required" });
+    if (!title || !description) {
+      return res.status(400).json({ message: "Title and description required" });
+    }
     const blog = new Blog({ title, description });
     await blog.save();
     res.status(201).json(blog);
@@ -267,23 +279,15 @@ app.post("/api/blogs", async (req, res) => {
   }
 });
 
-// DELETE a blog
-app.delete("/api/blogs/:id", async (req, res) => {
-  try {
-    const deleted = await Blog.findByIdAndDelete(req.params.id);
-    if (!deleted) return res.status(404).json({ message: "Blog not found" });
-    res.json({ message: "Blog deleted" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Failed to delete blog" });
-  }
-});
-
-// UPDATE a blog
+// Update blog
 app.put("/api/blogs/:id", async (req, res) => {
   try {
-    const updated = await Blog.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!updated) return res.status(404).json({ message: "Blog not found" });
+    const updated = await Blog.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
+    if (!updated) {
+      return res.status(404).json({ message: "Blog not found" });
+    }
     res.json(updated);
   } catch (err) {
     console.error(err);
@@ -291,6 +295,22 @@ app.put("/api/blogs/:id", async (req, res) => {
   }
 });
 
-// Use Render port
+// Delete blog
+app.delete("/api/blogs/:id", async (req, res) => {
+  try {
+    const deleted = await Blog.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ message: "Blog not found" });
+    }
+    res.json({ message: "Blog deleted" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to delete blog" });
+  }
+});
+
+/* ========= Start Server ========= */
 const PORT = process.env.PORT || 5050;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
