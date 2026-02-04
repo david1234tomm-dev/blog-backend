@@ -99,8 +99,7 @@
 
 
 // server.js
-// server.js
-const express = require("express");
+// server.jsconst express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config();
@@ -116,8 +115,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options("/api/*", cors(corsOptions)); // <-- only API routes
-
+app.options("/api/*", cors(corsOptions)); // only API preflight
 app.use(express.json());
 
 /* ========= MongoDB ========= */
@@ -137,9 +135,7 @@ const blogSchema = new mongoose.Schema(
 
 const Blog = mongoose.model("Blog", blogSchema);
 
-/* ========= Routes ========= */
-app.get("/", (req, res) => res.send("Blog backend is running 🚀"));
-
+/* ========= API Routes ========= */
 // Get all blogs
 app.get("/api/blogs", async (req, res) => {
   try {
@@ -189,6 +185,12 @@ app.delete("/api/blogs/:id", async (req, res) => {
     console.error(err);
     res.status(500).json({ message: "Failed to delete blog" });
   }
+});
+
+/* ========= Optional Catch-All Route ========= */
+// Put at the END after all /api routes
+app.get("/*", (req, res) => {
+  res.send("Blog backend is running 🚀");
 });
 
 /* ========= Start Server ========= */
