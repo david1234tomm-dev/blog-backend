@@ -7,12 +7,14 @@ require("dotenv").config();
 const app = express();
 
 /* ========= CORS ========= */
-// Allow requests only from your frontend Render URL
 const corsOptions = {
-  origin: "https://blog-frontend-1vqa.onrender.com", // Replace with your frontend URL
-  methods: ["GET", "POST", "PUT", "DELETE"],
+  origin: "https://blog-frontend-1vqa.onrender.com",
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type"],
 };
+
 app.use(cors(corsOptions));
+app.options("*", cors(corsOptions)); // handle preflight requests
 
 app.use(express.json());
 
@@ -27,8 +29,16 @@ mongoose
 /* ========= Schema ========= */
 const blogSchema = new mongoose.Schema(
   {
-    title: { type: String, required: true },
-    description: { type: String, required: true },
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    description: {
+      type: String,
+      required: true,
+      trim: true,
+    },
   },
   { timestamps: true }
 );
@@ -36,6 +46,7 @@ const blogSchema = new mongoose.Schema(
 const Blog = mongoose.model("Blog", blogSchema);
 
 /* ========= Routes ========= */
+
 // Health check
 app.get("/", (req, res) => {
   res.send("Blog backend is running 🚀");
@@ -45,7 +56,7 @@ app.get("/", (req, res) => {
 app.get("/api/blogs", async (req, res) => {
   try {
     const blogs = await Blog.find().sort({ createdAt: -1 });
-    res.json(blogs);
+    res.status(200).json(blogs);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to fetch blogs" });
@@ -56,11 +67,16 @@ app.get("/api/blogs", async (req, res) => {
 app.post("/api/blogs", async (req, res) => {
   try {
     const { title, description } = req.body;
-    if (!title || !description)
-      return res.status(400).json({ message: "Title and description required" });
+
+    if (!title || !description) {
+      return res
+        .status(400)
+        .json({ message: "Title and description are required" });
+    }
 
     const blog = new Blog({ title, description });
     await blog.save();
+
     res.status(201).json(blog);
   } catch (err) {
     console.error(err);
@@ -71,9 +87,17 @@ app.post("/api/blogs", async (req, res) => {
 // Update blog
 app.put("/api/blogs/:id", async (req, res) => {
   try {
-    const updated = await Blog.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!updated) return res.status(404).json({ message: "Blog not found" });
-    res.json(updated);
+    const updatedBlog = await Blog.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+
+    if (!updatedBlog) {
+      return res.status(404).json({ message: "Blog not found" });
+    }
+
+    res.status(200).json(updatedBlog);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to update blog" });
@@ -83,9 +107,13 @@ app.put("/api/blogs/:id", async (req, res) => {
 // Delete blog
 app.delete("/api/blogs/:id", async (req, res) => {
   try {
-    const deleted = await Blog.findByIdAndDelete(req.params.id);
-    if (!deleted) return res.status(404).json({ message: "Blog not found" });
-    res.json({ message: "Blog deleted" });
+    const deletedBlog = await Blog.findByIdAndDelete(req.params.id);
+
+    if (!deletedBlog) {
+      return res.status(404).json({ message: "Blog not found" });
+    }
+
+    res.status(200).json({ message: "Blog deleted successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Failed to delete blog" });
@@ -94,4 +122,7 @@ app.delete("/api/blogs/:id", async (req, res) => {
 
 /* ========= Start Server ========= */
 const PORT = process.env.PORT || 5050;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
